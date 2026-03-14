@@ -16,7 +16,7 @@ export type {
   RiskFilterValue,
   RiskProfile,
   TransitVehicle,
-} from "../types.js";
+} from "../types";
 
 export {
   AssetStatus,
@@ -24,7 +24,7 @@ export {
   DataFreshness,
   GarageLocation,
   RiskLevel,
-} from "../types.js";
+} from "../types";
 
 // CSV utilities
 export {
@@ -34,7 +34,7 @@ export {
   parseCsvLine,
   safeParseDate,
   toNumber,
-} from "../csv.js";
+} from "../csv";
 
 // Risk engine
 export {
@@ -45,7 +45,7 @@ export {
   isConventionalBus,
   normalizeLocation,
   normalizeStatus,
-} from "../risk.js";
+} from "../risk";
 
 // UI helpers (available for embedding in other pages)
 export {
@@ -55,4 +55,4 @@ export {
   renderRiskRows,
   renderStatus,
   renderSummaryCards,
-} from "./ui.js";
+} from "./ui";
