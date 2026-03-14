@@ -3,15 +3,15 @@
 // Application entry point: fetches CSVs, builds the report, wires up the UI.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { buildBusRiskReport } from "../risk.js";
+import { buildBusRiskReport } from "../risk";
 import {
   bindFilterControls,
   filterAssets,
   renderRiskRows,
   renderStatus,
   renderSummaryCards,
-} from "./ui.js";
-import type { AppConfig, BusRiskReport, FilterState } from "../types.js";
+} from "./ui";
+import type { AppConfig, BusRiskReport, FilterState } from "../types";
 
 // ── Configuration ─────────────────────────────────────────────────────────────
 
