@@ -8,7 +8,7 @@ const navLinks = [
   { href: "/", label: "Overview" },
   { href: "/fleet", label: "Fleet" },
   { href: "/maintenance", label: "Maintenance" },
-  { href: "/reports", label: "Reports" },
+  { href: "/about", label: "About" },
 ];
 
 export default function Navbar() {
@@ -63,7 +63,7 @@ export default function Navbar() {
               {/* 3 active */}
             </span>
 
-            <button
+            {/* <button
               type="button"
               className="w-8 h-8 border border-[#2a2a2a] text-[#666] flex items-center justify-center
                          hover:border-[#444] hover:text-[#ccc] hover:bg-[#161616] transition-colors"
@@ -76,7 +76,7 @@ export default function Navbar() {
 
             <div className="w-8 h-8 bg-amber-400 flex items-center justify-center text-[10px] font-semibold text-black tracking-wide cursor-pointer">
               JD
-            </div>
+            </div> */}
           </div>
 
           {/* Mobile menu button */}
@@ -124,7 +124,7 @@ export default function Navbar() {
               );
             })}
           </div>
-          <div className="border-t border-[#1e1e1e] px-6 py-4 flex items-center gap-3">
+          {/* <div className="border-t border-[#1e1e1e] px-6 py-4 flex items-center gap-3">
             <div className="w-9 h-9 bg-amber-400 flex items-center justify-center text-[11px] font-semibold text-black tracking-wide">
               JD
             </div>
@@ -132,7 +132,7 @@ export default function Navbar() {
               <p className="text-[13px] font-medium text-white">John Doe</p>
               <p className="text-[11px] text-[#555]">john@example.com</p>
             </div>
-          </div>
+          </div> */}
         </div>
       )}
     </nav>
