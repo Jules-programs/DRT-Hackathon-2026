@@ -21,7 +21,7 @@ import { AssetDrawer } from "./AssetDrawer";
 export function FleetDashboard() {
   const { report: serverReport, status, error, refresh } = useFleetReport();
 
-  const [uploadedReport, setUploadedReport] = useState<BusRiskReport | null>(null);
+  const [uploadedReport] = useState<BusRiskReport | null>(null);
   const [showUpload, setShowUpload] = useState(false);
 
   const report = uploadedReport ?? serverReport;
@@ -32,11 +32,6 @@ export function FleetDashboard() {
   const { filters, setQuery, setRiskLevel, filtered } = useFleetFilters(
     report?.assets ?? []
   );
-
-  const handleUploadReady = useCallback((r: BusRiskReport) => {
-    setUploadedReport(r);
-    setShowUpload(false);
-  }, []);
 
   const handleExport = useCallback(() => {
     if (report) exportReport(report);
@@ -68,26 +63,7 @@ export function FleetDashboard() {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    onClick={() => setShowUpload((s) => !s)}
-                    className="rounded-xl border border-stone-300 bg-white px-4 py-2 text-sm font-medium text-stone-700 shadow-sm hover:bg-stone-50 active:scale-95 transition-all"
-                  >
-                    {showUpload ? "✕ Close" : "↑ Upload CSV"}
-                  </button>
-                  <button
-                    onClick={handleExport}
-                    disabled={!report}
-                    className="rounded-xl border border-stone-300 bg-white px-4 py-2 text-sm font-medium text-stone-700 shadow-sm hover:bg-stone-50 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-                  >
-                    ↓ Export CSV
-                  </button>
-                  <button
-                    onClick={refresh}
-                    disabled={status === "loading"}
-                    className="rounded-xl border border-stone-300 bg-white px-4 py-2 text-sm font-medium text-stone-700 shadow-sm hover:bg-stone-50 active:scale-95 disabled:cursor-wait disabled:opacity-50 transition-all"
-                  >
-                    {status === "loading" ? "Loading…" : "↻ Refresh"}
-                  </button>
+                    {/* insert any Right side Dashbaord area */}
                 </div>
               </div>
             </header>
