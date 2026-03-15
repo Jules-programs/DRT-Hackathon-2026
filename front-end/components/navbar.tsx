@@ -6,10 +6,10 @@ import { useState } from "react";
 import { usePathname } from "next/navigation";
 
 export const navLinks = [
-  { href: "/", label: "Dashboard" },
-  // { href: "/fleet", label: "Fleet" },
-  { href: "/inventory", label: "Inventory" },
-  // { href: "/maintenance", label: "Maintenance" },
+  { href: "/", label: "Overview" },
+ // { href: "/FleetDashboard", label: "FleetDashboard" },
+  { href: "/inventory", label: "Parts Inventory" },
+  //{ href: "/maintenance", label: "Maintenance" },
   { href: "/about", label: "About" },
 ];
 
