@@ -1,7 +1,14 @@
+// src/lib/risk.ts
 // ─────────────────────────────────────────────────────────────────────────────
-// risk.ts — DRT Fleet Risk Tracker
-// Pure domain logic: vehicle normalisation, risk scoring, and report assembly.
-// No DOM, no side-effects — fully unit-testable.
+// UNIFIED risk engine — pure domain logic, no DOM, no React.
+//
+// Used by BOTH sub-systems:
+//   • drt-nextjs  — buildBusRiskReport() called by API routes and hooks
+//   • drt-dashboard — calculateVehicleRisk() used inside mockData.ts
+//
+// IMPORTANT: all RiskLevel references use the PascalCase member names
+// (Critical / Warning / Stable) that match the unified types.ts.
+// The underlying string values ("CRITICAL"/"WARNING"/"STABLE") are unchanged.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import {
@@ -21,12 +28,9 @@ import {
 
 import { latestRowByAlias, parseCsv, safeParseDate, toNumber } from "./csv";
 
-// ── Constants ─────────────────────────────────────────────────────────────────
-
-/** Assumed average km/day for scoring (used to convert days → km equivalent). */
-const KM_PER_DAY_ESTIMATE = 71;
-
-// ── Normalisation helpers ─────────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════════════════════
+// NORMALISATION HELPERS
+// ════════════════════════════════════════════════════════════════════════════
 
 export function normalizeLocation(locDescription: string): GarageLocation {
   const upper = locDescription.toUpperCase();
@@ -37,62 +41,62 @@ export function normalizeLocation(locDescription: string): GarageLocation {
 
 export function normalizeStatus(raw: string): AssetStatus {
   switch (raw.trim().toUpperCase()) {
-    case "DOWN":
-      return AssetStatus.DOWN;
-    case "OPERATING":
-      return AssetStatus.OPERATING;
-    case "ACTIVE":
-      return AssetStatus.ACTIVE;
-    default:
-      return AssetStatus.UNKNOWN;
+    case "DOWN":      return AssetStatus.DOWN;
+    case "OPERATING": return AssetStatus.OPERATING;
+    case "ACTIVE":    return AssetStatus.ACTIVE;
+    default:          return AssetStatus.UNKNOWN;
   }
 }
 
 /**
- * Determines whether the asset is a conventional transit bus.
- * Admin vehicles and UTVs are excluded; anything with an ODOMETER meter or
- * "CONVENTIONAL" in its description qualifies.
+ * Returns true for conventional transit buses (New Flyer, Nova, etc.).
+ * Admin vehicles and UTVs are excluded.
  */
 export function isConventionalBus(
   assetDescription: string,
   meterName: string
 ): boolean {
-  const desc = assetDescription.toUpperCase();
+  const desc  = assetDescription.toUpperCase();
   const meter = meterName.toUpperCase();
   if (desc.includes("ADMIN") || desc.includes("UTV")) return false;
   return desc.includes("CONVENTIONAL") || meter === "ODOMETER";
 }
 
-/** Extracts a 4-digit year from an asset description string. */
+/** Extracts a 4-digit build year from an asset description string. */
 export function extractYear(assetDescription: string): number | null {
   const match = assetDescription.match(/(19|20)\d{2}/);
   return match ? Number(match[0]) : null;
 }
 
 /**
- * Classifies how fresh the data is relative to a reference date.
- * Reports older than 7 days are considered stale.
+ * Classifies data freshness relative to a reference date.
+ * Reports more than 7 days old are considered STALE.
  */
 export function classifyDataFreshness(
   reportDate: Date | null,
   asOfDate: Date
 ): DataFreshness {
   if (!reportDate) return DataFreshness.MISSING;
-  const DAY_MS = 24 * 60 * 60 * 1_000;
+  const DAY_MS  = 24 * 60 * 60 * 1_000;
   const ageDays = (asOfDate.getTime() - reportDate.getTime()) / DAY_MS;
   return ageDays <= 7 ? DataFreshness.CURRENT : DataFreshness.STALE;
 }
 
-// ── Risk calculation ──────────────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════════════════════
+// RISK CALCULATION  (exported — used by mockData.ts and API routes)
+// ════════════════════════════════════════════════════════════════════════════
+
+/** Assumed average km/day for converting days-late into a km-equivalent score. */
+const KM_PER_DAY_ESTIMATE = 71;
 
 /**
- * Calculates a risk profile for a single vehicle.
+ * Calculates a RiskProfile for a single vehicle.
  *
- * Escalation rules (in priority order):
- *  1. Asset DOWN → CRITICAL immediately
- *  2. unitsLate > tolerance OR daysLate > 14 → CRITICAL
- *  3. unitsLate > tolerance × 0.5 OR daysLate > 7 → WARNING
- *  4. Otherwise → STABLE
+ * Escalation rules (evaluated in order):
+ *   1. Asset DOWN                              → CRITICAL
+ *   2. unitsLate > tolerance  OR  daysLate > 14 → CRITICAL
+ *   3. unitsLate > tolerance×0.5  OR  daysLate > 7 → WARNING
+ *   4. Otherwise                               → STABLE
  */
 export function calculateVehicleRisk(vehicle: TransitVehicle): RiskProfile {
   const { unitsLate, daysLate, tolerance, status } = vehicle;
@@ -100,7 +104,7 @@ export function calculateVehicleRisk(vehicle: TransitVehicle): RiskProfile {
   if (status === AssetStatus.DOWN) {
     return {
       score: Math.max(unitsLate, tolerance),
-      level: RiskLevel.CRITICAL,
+      level: RiskLevel.Critical,
       label: "Asset DOWN",
     };
   }
@@ -108,7 +112,7 @@ export function calculateVehicleRisk(vehicle: TransitVehicle): RiskProfile {
   if (unitsLate > tolerance || daysLate > 14) {
     return {
       score: Math.max(unitsLate, daysLate * KM_PER_DAY_ESTIMATE),
-      level: RiskLevel.CRITICAL,
+      level: RiskLevel.Critical,
       label: `${unitsLate.toLocaleString()}km, ${daysLate}d Overdue`,
     };
   }
@@ -116,71 +120,67 @@ export function calculateVehicleRisk(vehicle: TransitVehicle): RiskProfile {
   if (unitsLate > tolerance * 0.5 || daysLate > 7) {
     return {
       score: unitsLate,
-      level: RiskLevel.WARNING,
+      level: RiskLevel.Warning,
       label: `Due Soon (${daysLate}d)`,
     };
   }
 
-  return { score: unitsLate, level: RiskLevel.STABLE, label: "Optimal" };
+  return { score: unitsLate, level: RiskLevel.Stable, label: "Optimal" };
 }
 
-// ── Data-quality gap detection ────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════════════════════
+// INTERNAL HELPERS
+// ════════════════════════════════════════════════════════════════════════════
 
 function deriveDataGaps(
   row: MaintenanceCsvRow,
   reportDate: Date | null
 ): string[] {
   const gaps: string[] = [];
-  if (!row["alias"]) gaps.push("missing alias");
-  if (!row["lastreading"]) gaps.push("missing lastreading");
-  if (!row["nexttrigger"]) gaps.push("missing nexttrigger");
+  if (!row["alias"])          gaps.push("missing alias");
+  if (!row["lastreading"])    gaps.push("missing lastreading");
+  if (!row["nexttrigger"])    gaps.push("missing nexttrigger");
   if (!row["lastpmwogenread"]) gaps.push("missing lastpmwogenread");
-  if (!reportDate) gaps.push("invalid or missing reportdate");
+  if (!reportDate)            gaps.push("invalid or missing reportdate");
   return gaps;
 }
 
-// ── Row → vehicle normalisation ───────────────────────────────────────────────
-
 function rowToVehicle(row: MaintenanceCsvRow): TransitVehicle {
   return {
-    alias: row["alias"] ?? "",
+    alias:            row["alias"]            ?? "",
     assetDescription: row["assetdescription"] ?? "",
-    unitsLate: toNumber(row["unitslate"]),
-    daysLate: toNumber(row["dayslate"]),
-    tolerance: toNumber(row["tolerance"]),
-    nextTrigger: toNumber(row["nexttrigger"]),
-    lastReading: toNumber(row["lastreading"]),
-    location: normalizeLocation(row["locdescription"] ?? ""),
-    status: normalizeStatus(
-      row["assetstatus"] ?? row["pmstatus"] ?? ""
-    ),
+    unitsLate:        toNumber(row["unitslate"]),
+    daysLate:         toNumber(row["dayslate"]),
+    tolerance:        toNumber(row["tolerance"]),
+    nextTrigger:      toNumber(row["nexttrigger"]),
+    lastReading:      toNumber(row["lastreading"]),
+    location:         normalizeLocation(row["locdescription"] ?? ""),
+    status:           normalizeStatus(row["assetstatus"] ?? row["pmstatus"] ?? ""),
   };
 }
-
-// ── Row → full risk details ───────────────────────────────────────────────────
 
 function rowToRiskDetails(
   row: MaintenanceCsvRow,
   previousRow: MaintenanceCsvRow | null,
   asOfDate: Date
 ): BusRiskDetails {
-  const vehicle = rowToVehicle(row);
-  const risk = calculateVehicleRisk(vehicle);
+  const vehicle   = rowToVehicle(row);
+  const risk      = calculateVehicleRisk(vehicle);
   const reportDate = safeParseDate(row["reportdate"]);
-  const yearBuilt = extractYear(vehicle.assetDescription);
+  const yearBuilt  = extractYear(vehicle.assetDescription);
   const conventional = isConventionalBus(
     row["assetdescription"] ?? "",
-    row["metername"] ?? ""
+    row["metername"]        ?? ""
   );
 
   const overToleranceByKm = Math.max(vehicle.unitsLate - vehicle.tolerance, 0);
   const riskRatio =
     vehicle.tolerance > 0 ? vehicle.unitsLate / vehicle.tolerance : 0;
   const freshness = classifyDataFreshness(reportDate, asOfDate);
-  const dataGaps = deriveDataGaps(row, reportDate);
+  const dataGaps  = deriveDataGaps(row, reportDate);
 
   const prevUnitsLate = previousRow ? toNumber(previousRow["unitslate"]) : null;
-  const prevDaysLate = previousRow ? toNumber(previousRow["dayslate"]) : null;
+  const prevDaysLate  = previousRow ? toNumber(previousRow["dayslate"])  : null;
 
   const riskFactors: string[] = [];
   if (vehicle.status === AssetStatus.DOWN) {
@@ -203,50 +203,47 @@ function rowToRiskDetails(
   }
 
   return {
-    busNumber: vehicle.alias,
+    busNumber:        vehicle.alias,
     assetDescription: vehicle.assetDescription,
-    assetType: conventional
+    assetType:        conventional
       ? AssetType.CONVENTIONAL_BUS
       : AssetType.NON_CONVENTIONAL_ASSET,
     isConventionalBus: conventional,
-    location: vehicle.location,
-    assetStatus: vehicle.status,
+    location:          vehicle.location,
+    assetStatus:       vehicle.status,
     reportDate,
-    odometerKm: vehicle.lastReading,
-    nextServiceKm: vehicle.nextTrigger,
-    kmToNextService: toNumber(row["unitstogo"]),
-    unitsLate: vehicle.unitsLate,
-    daysOverdue: vehicle.daysLate,
-    toleranceKm: vehicle.tolerance,
-    riskLevel: risk.level,
-    riskScore: risk.score,
-    riskLabel: risk.label,
+    odometerKm:        vehicle.lastReading,
+    nextServiceKm:     vehicle.nextTrigger,
+    kmToNextService:   toNumber(row["unitstogo"]),
+    unitsLate:         vehicle.unitsLate,
+    daysOverdue:       vehicle.daysLate,
+    toleranceKm:       vehicle.tolerance,
+    riskLevel:         risk.level,
+    riskScore:         risk.score,
+    riskLabel:         risk.label,
     riskRatio,
     overToleranceByKm,
     yearBuilt,
-    ageYears: yearBuilt != null ? asOfDate.getFullYear() - yearBuilt : null,
-    currentJobPlan: row["curjpdescription"] ?? "",
-    nextJobPlan: row["jpdescription"] ?? "",
-    unitsLateDelta:
-      prevUnitsLate === null ? null : vehicle.unitsLate - prevUnitsLate,
-    daysLateDelta:
-      prevDaysLate === null ? null : vehicle.daysLate - prevDaysLate,
-    dataFreshness: freshness,
+    ageYears:          yearBuilt != null ? asOfDate.getFullYear() - yearBuilt : null,
+    currentJobPlan:    row["curjpdescription"] ?? "",
+    nextJobPlan:       row["jpdescription"]    ?? "",
+    unitsLateDelta:    prevUnitsLate === null ? null : vehicle.unitsLate - prevUnitsLate,
+    daysLateDelta:     prevDaysLate  === null ? null : vehicle.daysLate  - prevDaysLate,
+    dataFreshness:     freshness,
     dataGaps,
     riskFactors,
   };
 }
 
-// ── Sorting ───────────────────────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════════════════════
+// SORTING
+// ════════════════════════════════════════════════════════════════════════════
 
 function rankRisk(level: RiskLevel): number {
   switch (level) {
-    case RiskLevel.CRITICAL:
-      return 3;
-    case RiskLevel.WARNING:
-      return 2;
-    case RiskLevel.STABLE:
-      return 1;
+    case RiskLevel.Critical: return 3;
+    case RiskLevel.Warning:  return 2;
+    case RiskLevel.Stable:   return 1;
   }
 }
 
@@ -259,47 +256,49 @@ function sortAssets(assets: BusRiskDetails[]): BusRiskDetails[] {
   });
 }
 
-// ── Depot summary ─────────────────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════════════════════
+// DEPOT SUMMARY
+// ════════════════════════════════════════════════════════════════════════════
 
 function summarizeDepot(
   assets: readonly BusRiskDetails[],
   location: GarageLocation
 ): DepotRiskSummary {
-  const scoped = assets.filter((a) => a.location === location);
+  const scoped     = assets.filter((a) => a.location === location);
   const totalAssets = scoped.length;
-  const totalDays = scoped.reduce((sum, a) => sum + a.daysOverdue, 0);
+  const totalDays  = scoped.reduce((sum, a) => sum + a.daysOverdue, 0);
 
   return {
     location,
     totalAssets,
-    critical: scoped.filter((a) => a.riskLevel === RiskLevel.CRITICAL).length,
-    warning: scoped.filter((a) => a.riskLevel === RiskLevel.WARNING).length,
-    stable: scoped.filter((a) => a.riskLevel === RiskLevel.STABLE).length,
+    critical:      scoped.filter((a) => a.riskLevel === RiskLevel.Critical).length,
+    warning:       scoped.filter((a) => a.riskLevel === RiskLevel.Warning).length,
+    stable:        scoped.filter((a) => a.riskLevel === RiskLevel.Stable).length,
     avgDaysOverdue:
-      totalAssets > 0
-        ? Number((totalDays / totalAssets).toFixed(2))
-        : 0,
+      totalAssets > 0 ? Number((totalDays / totalAssets).toFixed(2)) : 0,
   };
 }
 
-// ── Public API ────────────────────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════════════════════
+// PUBLIC API
+// ════════════════════════════════════════════════════════════════════════════
 
 /**
  * Builds a complete BusRiskReport from raw CSV text snapshots.
  *
- * @param currentSnapshotCsv  - The most recent Maximo PM export
- * @param previousSnapshotCsv - An older snapshot used for delta calculations
- * @param asOfDate            - The reference date (defaults to today)
+ * @param currentSnapshotCsv   Most recent Maximo PM export
+ * @param previousSnapshotCsv  Older snapshot for delta calculations (optional)
+ * @param asOfDate             Reference date for risk/freshness scoring (default: now)
  */
 export function buildBusRiskReport(
   currentSnapshotCsv: string,
   previousSnapshotCsv?: string,
   asOfDate: Date = new Date()
 ): BusRiskReport {
-  const currentRows = parseCsv(currentSnapshotCsv);
+  const currentRows  = parseCsv(currentSnapshotCsv);
   const previousRows = previousSnapshotCsv ? parseCsv(previousSnapshotCsv) : [];
 
-  const currentByAlias = latestRowByAlias(currentRows);
+  const currentByAlias  = latestRowByAlias(currentRows);
   const previousByAlias = latestRowByAlias(previousRows);
 
   const assets = sortAssets(
@@ -315,10 +314,10 @@ export function buildBusRiskReport(
   const overdue = assets.filter((a) => a.unitsLate > 0).length;
 
   const fleet: FleetRiskSummary = {
-    totalAssets: assets.length,
-    critical: assets.filter((a) => a.riskLevel === RiskLevel.CRITICAL).length,
-    warning: assets.filter((a) => a.riskLevel === RiskLevel.WARNING).length,
-    stable: assets.filter((a) => a.riskLevel === RiskLevel.STABLE).length,
+    totalAssets:    assets.length,
+    critical:       assets.filter((a) => a.riskLevel === RiskLevel.Critical).length,
+    warning:        assets.filter((a) => a.riskLevel === RiskLevel.Warning).length,
+    stable:         assets.filter((a) => a.riskLevel === RiskLevel.Stable).length,
     overduePercent:
       assets.length > 0
         ? Number(((overdue / assets.length) * 100).toFixed(2))

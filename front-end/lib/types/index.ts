@@ -1,42 +1,64 @@
+// src/lib/index.ts
 // ─────────────────────────────────────────────────────────────────────────────
-// index.ts — DRT Fleet Risk Tracker
-// Public API surface. Import from here when using as a library.
+// Unified barrel export for the DRT Fleet System.
+// Import from "@/lib" to access anything from either sub-system.
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Types
+// ── All types ────────────────────────────────────────────────────────────────
 export type {
   AppConfig,
+  AutofillOverride,
+  BusRecord,
   BusRiskDetails,
   BusRiskReport,
+  BusServiceSpec,
   CsvPaths,
+  DashboardFilters,
   DepotRiskSummary,
   FilterState,
   FleetRiskSummary,
+  FleetSummary,
   MaintenanceCsvRow,
+  MaintenanceEntry,
+  NewMaintenanceEntryForm,
+  PMRecord,
   RiskFilterValue,
   RiskProfile,
+  ServicePart,
   TransitVehicle,
+  UpdateMaintenanceEntryForm,
+  UsedPart,
+  UsedPartForm,
 } from "../types";
 
 export {
   AssetStatus,
   AssetType,
+  BusManufacturer,
   DataFreshness,
   GarageLocation,
+  MaintenanceStatus,
   RiskLevel,
+  ServiceLevel,
 } from "../types";
 
-// CSV utilities
+// ── CSV utilities ─────────────────────────────────────────────────────────────
 export {
-  isMaximoTypeRow,
-  latestRowByAlias,
   parseCsv,
   parseCsvLine,
-  safeParseDate,
+  isMaximoTypeRow,
+  isTypeRow,
+  latestRowByAlias,
+  deduplicateByAlias,
+  rowToPMRecord,
+  csvToPMRecords,
   toNumber,
+  toNum,
+  safeParseDate,
+  toDate,
 } from "../csv";
 
-// Risk engine
+// ── Risk engine ───────────────────────────────────────────────────────────────
 export {
   buildBusRiskReport,
   calculateVehicleRisk,
@@ -47,12 +69,21 @@ export {
   normalizeStatus,
 } from "../risk";
 
-// UI helpers (available for embedding in other pages)
+// ── Export utility (fleet risk tracker) ──────────────────────────────────────
+export { exportReport, reportToCsv, downloadCsv } from "./export";
+
+// ── Parts catalogue (bus dashboard) ──────────────────────────────────────────
 export {
-  bindFilterControls,
-  filterAssets,
-  readFilterState,
-  renderRiskRows,
-  renderStatus,
-  renderSummaryCards,
-} from "./ui";
+  BUS_SERVICE_SPECS,
+  getSpecForAlias,
+  getPartsForServiceLevel,
+  serviceLevelFromJobPlan,
+  ALL_GARAGES,
+} from "../partsCatalogue";
+
+// ── Mock data (bus dashboard) ─────────────────────────────────────────────────
+export {
+  generateMockBusRecords,
+  getMockBuses,
+  computeFleetSummary,
+} from "../mockData";
