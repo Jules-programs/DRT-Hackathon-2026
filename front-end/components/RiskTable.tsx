@@ -126,7 +126,12 @@ export function RiskTable({ assets, onSelect }: Props) {
             </tr>
           ) : (
             sorted.map((asset, i) => (
-              <AssetRow key={asset.busNumber} asset={asset} index={i} onSelect={onSelect} />
+              <AssetRow
+                key={asset.busNumber}
+                asset={asset}
+                index={i}
+                {...(onSelect ? { onSelect } : {})}
+              />
             ))
           )}
         </tbody>
