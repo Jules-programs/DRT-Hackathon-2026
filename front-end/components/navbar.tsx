@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 
-const navLinks = [
+export const navLinks = [
   { href: "/", label: "Overview" },
   { href: "/fleet", label: "Fleet" },
   { href: "/inventory", label: "Inventory" },
@@ -24,8 +25,10 @@ export default function Navbar() {
           {/* Left: Logo + Links */}
           <div className="flex items-center gap-8">
             <Link href="/" className="flex items-center gap-2.5">
-              <div className="w-7 h-7 bg-amber-400 flex items-center justify-center">
-                <span className="text-[10px] font-semibold text-black tracking-wide">DRT</span>
+              <div className="bg-white rounded-sm px-1.5 py-1 flex items-center justify-center">
+                <span className="flex items-center">
+                    <Image src="/data/assets/drtlogo.svg" alt="DRT Logo" width={56} height={20} className="object-contain" />
+                </span>
               </div>
               <span className="text-[13px] font-semibold text-white uppercase tracking-widest">
                 Dashboard
@@ -45,7 +48,7 @@ export default function Navbar() {
                       uppercase tracking-widest border-l border-[#1e1e1e]
                       transition-colors duration-150
                       ${active
-                        ? "text-amber-400 bg-[#1a1500] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-amber-400"
+                        ? "text-[#00703C] bg-[#00703C]/10 after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-[#00703C]"
                         : "text-[#666] hover:text-[#e5e5e5] hover:bg-[#161616]"
                       }
                     `}
@@ -115,7 +118,7 @@ export default function Navbar() {
                     block px-6 py-3 text-[11px] font-medium uppercase tracking-widest
                     border-l-2 transition-colors
                     ${active
-                      ? "border-amber-400 text-amber-400 bg-[#1a1500]"
+                      ? "border-[#00703C] text-[#00703C] bg-[#00703C]/10"
                       : "border-transparent text-[#666] hover:text-[#ccc] hover:bg-[#161616]"
                     }
                   `}
