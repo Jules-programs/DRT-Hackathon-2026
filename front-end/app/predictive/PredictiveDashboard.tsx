@@ -442,7 +442,7 @@ const VIEWS: { id: DashView; label: string; icon: string }[] = [
 
 export default function PredictiveDashboard() {
   const predictive = useFleetPredictive();
-  const [view, setView] = useState<DashView>("notifications");
+  const [view, setView] = useState<DashView>("seasonal");
 
   const criticalCount  = predictive.counts.CRITICAL;
   const highCount      = predictive.counts.HIGH;
