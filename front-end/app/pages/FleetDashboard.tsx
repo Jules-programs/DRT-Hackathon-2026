@@ -12,11 +12,11 @@ import { useFleetFilters } from "@/hooks/useFleetFilters";
 import { exportReport } from "@/lib/types/export";
 import type { BusRiskDetails, BusRiskReport } from "@/lib/types";
 
-import { FleetSummaryCards } from "./FleetSummaryCards";
-import { DepotBreakdown } from "./DepotBreakdown";
-import { FilterBar } from "./FilterBar";
-import { RiskTable } from "./RiskTable";
-import { AssetDrawer } from "./AssetDrawer";
+import { FleetSummaryCards } from "@/components/FleetRiskTracker/FleetSummaryCards";
+import { DepotBreakdown } from "@/components/FleetRiskTracker/DepotBreakdown";
+import { FilterBar } from "@/components/FleetRiskTracker/FilterBar";
+import { RiskTable } from "@/components/FleetRiskTracker/RiskTable";
+import { AssetDrawer } from "@/components/FleetRiskTracker/AssetDrawer";
 
 export function FleetDashboard() {
   const { report: serverReport, status, error, refresh } = useFleetReport();
@@ -32,15 +32,6 @@ export function FleetDashboard() {
   const { filters, setQuery, setRiskLevel, filtered } = useFleetFilters(
     report?.assets ?? []
   );
-
-  const handleUploadReady = useCallback((r: BusRiskReport) => {
-    setUploadedReport(r);
-    setShowUpload(false);
-  }, []);
-
-  const handleExport = useCallback(() => {
-    if (report) exportReport(report);
-  }, [report]);
 
   const isLoading = status === "loading" && !report;
 
@@ -60,34 +51,6 @@ export function FleetDashboard() {
                     Preventative maintenance risk from current and previous PM snapshots —
                     sorted highest risk first, with delta tracking and data-quality flags.
                   </p>
-                  {uploadedReport && (
-                    <span className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-teal-200 bg-teal-50 px-2.5 py-0.5 text-[0.68rem] font-medium text-teal-700">
-                      ✓ Using uploaded snapshot
-                    </span>
-                  )}
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    onClick={() => setShowUpload((s) => !s)}
-                    className="rounded-xl border border-stone-300 bg-white px-4 py-2 text-sm font-medium text-stone-700 shadow-sm hover:bg-stone-50 active:scale-95 transition-all"
-                  >
-                    {showUpload ? "✕ Close" : "↑ Upload CSV"}
-                  </button>
-                  <button
-                    onClick={handleExport}
-                    disabled={!report}
-                    className="rounded-xl border border-stone-300 bg-white px-4 py-2 text-sm font-medium text-stone-700 shadow-sm hover:bg-stone-50 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-                  >
-                    ↓ Export CSV
-                  </button>
-                  <button
-                    onClick={refresh}
-                    disabled={status === "loading"}
-                    className="rounded-xl border border-stone-300 bg-white px-4 py-2 text-sm font-medium text-stone-700 shadow-sm hover:bg-stone-50 active:scale-95 disabled:cursor-wait disabled:opacity-50 transition-all"
-                  >
-                    {status === "loading" ? "Loading…" : "↻ Refresh"}
-                  </button>
                 </div>
               </div>
             </header>
