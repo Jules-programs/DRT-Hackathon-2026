@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+
 const team = [
   {
     initials: "JM",
@@ -210,9 +212,11 @@ export default function About() {
         className="bg-[#111] border border-[#1e1e1e] p-6 flex flex-col gap-4"
       >
         <div className="h-12 flex items-center justify-start">
-          <img
+          <Image    
             src={logo}
             alt={name}
+            width={180}
+            height={48}
             className="max-h-full max-w-full object-contain opacity-60"
             onError={(e) => {
               e.currentTarget.style.display = "none";
