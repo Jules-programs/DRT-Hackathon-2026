@@ -6,9 +6,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { buildBusRiskReport } from "@/lib/types/";
 import type { BusRiskReport } from "@/lib/types";
 
+import { getMockBuses } from "@/lib/mockData";
+import type { BusRecord } from "@/lib/types";
+
+
 const MAX_FILE_BYTES = 5 * 1024 * 1024; // 5 MB per file
 
 const AS_OF_DATE = new Date("2026-03-14T00:00:00");
+
+export async function GET(): Promise<NextResponse<BusRecord[]>> {
+  const buses = getMockBuses();
+  return NextResponse.json(buses);
+}
 
 export async function POST(
   req: NextRequest

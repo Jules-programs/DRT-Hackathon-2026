@@ -12,11 +12,11 @@ import { useFleetFilters } from "@/hooks/useFleetFilters";
 import { exportReport } from "@/lib/types/export";
 import type { BusRiskDetails, BusRiskReport } from "@/lib/types";
 
-import { FleetSummaryCards } from "./FleetSummaryCards";
-import { DepotBreakdown } from "./DepotBreakdown";
-import { FilterBar } from "./FilterBar";
-import { RiskTable } from "./RiskTable";
-import { AssetDrawer } from "./AssetDrawer";
+import { FleetSummaryCards } from "@/components/FleetRiskTracker/FleetSummaryCards";
+import { DepotBreakdown } from "@/components/FleetRiskTracker/DepotBreakdown";
+import { FilterBar } from "@/components/FleetRiskTracker/FilterBar";
+import { RiskTable } from "@/components/FleetRiskTracker/RiskTable";
+import { AssetDrawer } from "@/components/FleetRiskTracker/AssetDrawer";
 
 export function FleetDashboard() {
   const { report: serverReport, status, error, refresh } = useFleetReport();

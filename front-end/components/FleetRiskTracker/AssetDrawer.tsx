@@ -208,7 +208,7 @@ export function AssetDrawer({ asset, onClose }: Props) {
                   />
                 )}
                 <Field label="Over tolerance by" value={formatKm(asset.overToleranceByKm)}
-                  accent={asset.overToleranceByKm > 0 ? "text-red-600" : undefined} />
+                  accent={asset.overToleranceByKm > 0 ? "text-red-600" : "text-red-500"} />
               </Section>
 
               {/* Asset info */}
